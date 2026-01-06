@@ -866,7 +866,7 @@
 }
 
 .rtl .Headingstrip,
-.rtl .topbannerbox,
+.rtl,
 .rtl .contentSection {
   flex-direction: row-reverse;
 }
@@ -950,6 +950,8 @@
 .lang-btn:not(.active):hover {
   background: #e6f2f5;
 }
-
+.lang-toggle{
+  flex-direction: none !important;
+}
 
 }
