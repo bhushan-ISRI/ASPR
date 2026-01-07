@@ -1381,10 +1381,10 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                                     className={`circleBox`}
                                 >
                                     <div className="circle-icon">
-                                        <img src={libraraylogo} alt="Library" />
                                         <p className="circleName">
                                             {isArabic ? lib.TranslatedTitle || lib.Title : lib.Title}
                                         </p>
+                                        <img src={libraraylogo} alt="Library" />
                                     </div>
                                 </a>
                             ))

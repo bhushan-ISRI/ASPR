@@ -56,7 +56,7 @@ import Plus from "../../assets/img/Plus.png";
 import Upload from "../../assets/img/Upload.png";
 import rightblack from "../../assets/img/Rightblack.png";
 import leftblack from "../../assets/img/Leftblack.png";
-
+import link from "../../assets/img/link.png";
 // ----------------------------------------------------------------
 
 
@@ -130,7 +130,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
     const [userEmail, setUserEmail] = useState<string>("");
     const [userPhotoUrl, setUserPhotoUrl] = useState<string>("");
 
-    const itemsPerPage = 5; // sliding window size
+    const itemsPerPage = 8; // sliding window size
     const [currentIndex, setCurrentIndex] = useState(
         Math.max(libraries.length - itemsPerPage, 0)
     ); // start from the latest 5
@@ -1372,24 +1372,53 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                 {/* Repository Boxes */}
                 <div className="librarySliderWrapper">
 
-                    <div className="links-grid">
+                    <div className="libraryTabs">
                         {filteredLibraries.length > 0 ? (
                             filteredLibraries.map((lib) => (
+                                // <a
+                                //     key={lib.Id}
+                                //     href={`#/library/${lib.Title}`}
+                                //     className={`circleBox`}
+                                // >
+                                //     {/* <div className="card-header"> */}
+                                //     <div className="circle-icon">
+
+                                //         <img src={libraraylogo} alt="Library" />
+                                //         <p className="circleName">
+                                //             {isArabic ? lib.TranslatedTitle || lib.Title : lib.Title}
+                                //         </p>
+                                //     </div>
+                                //     {/* </div> */}
+                                // </a>
+
                                 <a
                                     key={lib.Id}
                                     href={`#/library/${lib.Title}`}
-                                    className={`circleBox`}
+                                    className="circleBox"
                                 >
-                                    {/* <div className="card-header"> */}
-                                    <div className="link-card">
-                                        <p className="card-header-text">
-                                            {isArabic ? lib.TranslatedTitle || lib.Title : lib.Title}
-                                        </p>
-                                        <img src={libraraylogo} alt="Library" />
-                                        
+                                    <div className="erp-card">
+                                        {/* Header */}
+                                        <div className="erp-card-header">
+                                            <span className="erp-title">
+                                                {isArabic ? lib.TranslatedTitle || lib.Title : lib.Title}
+                                            </span>
+                                            <a href="" className="imageiconcircle">
+                                                <img src={libraraylogo} alt="Library" className="erp-icon" />
+                                            </a>
+                                        </div>
+
+                                        {/* Body */}
+                                        <div className="erp-card-body">
+                                            <p>Access employee management systems.</p>
+                                            {/* Footer Button */}
+                                            <div className="erp-card-footer">
+                                                <span>Access ERP System</span>
+                                                <img src={link} alt="" />
+                                            </div>
+                                        </div>
                                     </div>
-                                    {/* </div> */}
                                 </a>
+
                             ))
                         ) : (
                             <p style={{ textAlign: "center", marginTop: "20px" }}>
