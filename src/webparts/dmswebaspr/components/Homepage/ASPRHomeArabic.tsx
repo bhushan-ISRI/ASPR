@@ -1372,7 +1372,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                 {/* Repository Boxes */}
                 <div className="librarySliderWrapper">
 
-                    <div className="libraryTabs">
+                    <div className="links-grid">
                         {filteredLibraries.length > 0 ? (
                             filteredLibraries.map((lib) => (
                                 <a
@@ -1380,12 +1380,15 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                                     href={`#/library/${lib.Title}`}
                                     className={`circleBox`}
                                 >
-                                    <div className="circle-icon">
-                                        <img src={libraraylogo} alt="Library" />
-                                        <p className="circleName">
+                                    {/* <div className="card-header"> */}
+                                    <div className="link-card">
+                                        <p className="card-header-text">
                                             {isArabic ? lib.TranslatedTitle || lib.Title : lib.Title}
                                         </p>
+                                        <img src={libraraylogo} alt="Library" />
+                                        
                                     </div>
+                                    {/* </div> */}
                                 </a>
                             ))
                         ) : (

@@ -301,12 +301,12 @@
   }
 
   .circleBox .circle-icon {
-    width: 170px;
-    height: 170px;
-    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+     border-radius: 10%;
     background: #fff;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     /* stack icon + text */
     justify-content: center;
     align-items: center;
@@ -316,13 +316,46 @@
     transition: all 0.3s ease;
   }
 
-  .circleBox .circle-icon img {
-    width: 45px;
-    height: 45px;
+  .links-grid .link-card img {
+    width: 20px;
+    height: 20px;
     margin-bottom: 10px;
     filter: brightness(0) saturate(100%) invert(57%) sepia(96%) saturate(564%) hue-rotate(145deg) brightness(89%) contrast(96%);
   }
-
+.links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+    margin-top: 40px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    justify-items: center;
+}
+.card-header {
+    padding: 22px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+.link-card {
+    background: white;
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    width: 100%;
+    max-width: 280px;
+}
   .circleBox .circleName {
     font-size: 14px;
     font-weight: 600;
