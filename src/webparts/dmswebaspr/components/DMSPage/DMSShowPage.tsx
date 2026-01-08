@@ -716,7 +716,8 @@ useEffect(() => {
     };
      
     return (
-        <div className="document-page">
+        <div  className={`document-page ${isArabic ? "rtl" : "ltr"}`}
+  dir={isArabic ? "rtl" : "ltr"}>
             <h2 style={{ background: "#18465e", color: "white" }}>
                 {isArabic
                     ? `المجلدات والملفات في ${translatedLibraryName}`
