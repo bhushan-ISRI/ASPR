@@ -816,7 +816,7 @@ useEffect(() => {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={4}>No files found</td>
+                            <td colSpan={4}>{isArabic ? "لم يتم العثور على أي ملفات أو مجلدات" : "No files or folders found"}</td>
                         </tr>
                     )}
                 </tbody>
