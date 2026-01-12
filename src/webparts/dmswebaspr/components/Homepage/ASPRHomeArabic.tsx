@@ -59,6 +59,9 @@ import Upload from "../../assets/img/Upload.png";
 import rightblack from "../../assets/img/Rightblack.png";
 import leftblack from "../../assets/img/Leftblack.png";
 import link from "../../assets/img/link.png";
+
+import { LanguageProvider } from '../Homepage/Languagecontext';
+
 // ----------------------------------------------------------------
 
 
