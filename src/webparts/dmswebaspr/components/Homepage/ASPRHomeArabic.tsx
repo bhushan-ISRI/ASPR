@@ -30,6 +30,8 @@ import "@fontsource/tajawal";       // Regular 400
 import "@fontsource/tajawal/500.css"; // Medium (optional)
 import "@fontsource/tajawal/700.css"; // Bold (optional)
 
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
 // -----------------------------------
 import {
     DetailsList,
@@ -1256,6 +1258,22 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         }
     ];
 
+    const libraryIconMap: { [key: string]: string } = {
+        "Chairman Office": "fas fa-briefcase",
+        "Economic Regulation and Markets": "fas fa-balance-scale",
+        "Energy": "fas fa-bolt",
+        "Legal and Customer Affairs": "fas fa-gavel",
+        "Planning and Institutional Performance Development": "fas fa-chart-line",
+        "Sustainable Energy": "fas fa-leaf",
+        "Water and Wastewater": "fas fa-tint",
+    };
+
+
+    const getLibraryIcon = (title: string) => {
+        return libraryIconMap[title] || ""; // default icon
+    };
+
+
 
     return (
         <div
@@ -1282,16 +1300,10 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                     </div>
                 </div>
                 <div className="Headline"></div>
-                <div className="topbannerbox">
+                <div className={isArabic ? "erp-topbannerbox" : "topbannerbox"}>
                     <div className="navmainsection">
                         <ul className="nav-tabs">
                             <li>
-                                {/* <Button
-                                    onClick={handleTranslateClick}
-                                    style={{ marginBottom: 15, backgroundColor: "#0078d4", color: "#fff" }}
-                                >
-                                    {isArabic ? "Switch to English" : "التبديل إلى العربية"}
-                                </Button> */}
                                 <div className="lang-toggle">
                                     <button
                                         className={`lang-btn ${language === "en" ? "active" : ""}`}
@@ -1369,22 +1381,6 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                     <div className="libraryTabs">
                         {filteredLibraries.length > 0 ? (
                             filteredLibraries.map((lib) => (
-                                // <a
-                                //     key={lib.Id}
-                                //     href={`#/library/${lib.Title}`}
-                                //     className={`circleBox`}
-                                // >
-                                //     {/* <div className="card-header"> */}
-                                //     <div className="circle-icon">
-
-                                //         <img src={libraraylogo} alt="Library" />
-                                //         <p className="circleName">
-                                //             {isArabic ? lib.TranslatedTitle || lib.Title : lib.Title}
-                                //         </p>
-                                //     </div>
-                                //     {/* </div> */}
-                                // </a>
-
                                 <a
                                     key={lib.Id}
                                     // href={`#/library/${lib.Title}`}
@@ -1399,11 +1395,12 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                                     <div className="erp-card">
                                         {/* Header */}
                                         <div className="erp-card-header">
-                                            <span className="erp-title">
+                                            <span className={isArabic ? "erp-titleArabic" : "erp-title"}>
                                                 {isArabic ? lib.TranslatedTitle || lib.Title : lib.Title}
                                             </span>
                                             <a href="" className="imageiconcircle">
-                                                <img src={libraraylogo} alt="Library" className="erp-icon" />
+                                                {/* <img src={libraraylogo} alt="Library" className="erp-icon" /> */}
+                                                <i className={`${getLibraryIcon(lib.Title)} erp-icon`}></i>
                                             </a>
                                         </div>
 
