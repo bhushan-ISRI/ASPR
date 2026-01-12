@@ -140,7 +140,8 @@
     /* Left | Center | Right */
     align-items: center;
     padding: 8px 10px;
-    background: #006a5d;
+    // background: #006a5d;
+    background: linear-gradient(135deg, #006a5d, #2a8998);
     color: #fff;
     // margin-bottom: 5px;
   }
@@ -217,7 +218,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #006a5d;
+    // background-color: #006a5d;
+    background: linear-gradient(135deg, #006a5d, #2a8998);
     margin-bottom: 5px;
     padding: 0px 10px;
     // border-bottom: 1px solid #fff;
@@ -229,6 +231,16 @@
     align-items: center;
     background-color: #006a5d;
     margin-bottom: 5px;
+  }
+
+
+  .erp-topbannerbox{
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5px 0 5px;
+    background: linear-gradient(135deg, #006a5d, #2a8998);
   }
 
   .LibSearch {
@@ -245,7 +257,7 @@
   }
 
   .nav-tabs li {
-    background-color: #006a5d;
+    // background-color: #006a5d;
     color: #fff;
     cursor: pointer;
     list-style: none;
@@ -396,6 +408,7 @@
     align-items: center;
     position: relative;
     overflow: hidden;
+    height: 75px;
   }
 
   .erp-card-header::after {
@@ -420,7 +433,7 @@
   }
 
   .erp-title {
-    font-size: 1.25rem;
+    font-size: 1.05rem;
     font-weight: 600;
     position: relative;
     z-index: 1;
@@ -428,17 +441,25 @@
     text-align: left;
   }
 
+  .erp-titleArabic {
+    font-size: 1.05rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+    color: #fff;
+    text-align: right;
+  }
+
   /* ICON */
   .imageiconcircle {
     background-color: rgba(255, 255, 255, 0.2);
-    padding: 10px;
+    padding: 10px 10px 5px 10px;
     border-radius: 12px;
   }
 
   .erp-icon {
-    width: 25px;
-    height: 25px;
-    filter: brightness(0) invert(1);
+    font-size: 20px;
+    color: #fff;
   }
 
   /* BODY */
@@ -589,6 +610,7 @@
     justify-content: end;
     align-items: center;
     padding: 0px 10px;
+    gap: 10px;
   }
 
   /* Optional: spacing inside left container */
@@ -840,45 +862,61 @@
     /* allow wrapping to new row */
     align-items: center;
     font-size: 14px;
-    gap: 5px;
+    gap: 10px;
     margin-bottom: .5rem !important;
+    padding-left: 10px;
   }
 
   .arrow-crumb {
     position: relative;
-    padding: 8px 25px 8px 35px;
-    background: #0abbdf;
-    color: #fff;
+    color: #000;
     font-weight: 500;
     cursor: pointer;
+    font-size: 16px;
     margin-right: 0;
-    /* remove gap, overlap instead */
-    clip-path: polygon(0 0,
-        /* top left */
-        calc(100% - 15px) 0,
-        /* before arrow head */
-        100% 50%,
-        /* arrow point */
-        calc(100% - 15px) 100%,
-        /* after arrow head */
-        0 100%,
-        /* bottom left */
-        15px 50%
-        /* inner notch */
-      );
-    flex-shrink: 0;
-    transition: background 0.2s;
   }
 
-  .arrow-crumb:first-child {
-    background: #006a5d;
-    padding-left: 20px;
+  .arrow-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
-  .arrow-crumb:last-child {
-    background: #006a5d;
-    color: #fff;
-  }
+  // .arrow-crumb {
+  //   position: relative;
+  //   padding: 8px 25px 8px 35px;
+  //   background: #0abbdf;
+  //   color: #fff;
+  //   font-weight: 500;
+  //   cursor: pointer;
+  //   margin-right: 0;
+  //   /* remove gap, overlap instead */
+  //   clip-path: polygon(0 0,
+  //       /* top left */
+  //       calc(100% - 15px) 0,
+  //       /* before arrow head */
+  //       100% 50%,
+  //       /* arrow point */
+  //       calc(100% - 15px) 100%,
+  //       /* after arrow head */
+  //       0 100%,
+  //       /* bottom left */
+  //       15px 50%
+  //       /* inner notch */
+  //     );
+  //   flex-shrink: 0;
+  //   transition: background 0.2s;
+  // }
+
+  // .arrow-crumb:first-child {
+  //   background: #006a5d;
+  //   padding-left: 20px;
+  // }
+
+  // .arrow-crumb:last-child {
+  //   background: #006a5d;
+  //   color: #fff;
+  // }
 
 
   // popup
@@ -1076,7 +1114,7 @@
   }
 
   .rtl .nav-tabs {
-    flex-direction: row-reverse;
+    flex-direction: row;
   }
 
   /* IMAGE STYLE LAYOUT */
@@ -1147,7 +1185,8 @@
   }
 
   .lang-btn.active {
-    background: #0b6e4f;
+    // background: #0b6e4f;
+    background: linear-gradient(135deg, #006a5d, #2a8998);
     /* green like screenshot */
     color: #ffffff;
   }
