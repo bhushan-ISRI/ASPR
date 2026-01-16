@@ -52,15 +52,9 @@ import {
 
 import logo from "../../assets/img/Logo.png";
 import logoname from "../../assets/img/LogoName.png";
-import libraraylogo from "../../assets/img/libraraylogo.png";
-import DownArrow from "../../assets/img/DownArrow.png";
-import Plus from "../../assets/img/Plus.png";
-import Upload from "../../assets/img/Upload.png";
-import rightblack from "../../assets/img/Rightblack.png";
-import leftblack from "../../assets/img/Leftblack.png";
+import rightblack from "../../assets/img/Right.png";
+import leftblack from "../../assets/img/Left.png";
 import link from "../../assets/img/link.png";
-
-import { LanguageProvider } from '../Homepage/Languagecontext';
 
 // ----------------------------------------------------------------
 
@@ -111,6 +105,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
     const [isArabic, setIsArabic] = useState(false);
 
 
+    const [libraryIcons, setLibraryIcons] = useState<{ [key: string]: string }>({});
 
     const peoplePickerContext: IPeoplePickerContext = {
         msGraphClientFactory: props.currentSPContext.msGraphClientFactory as unknown as IPeoplePickerContext["msGraphClientFactory"],
@@ -369,25 +364,57 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
     // ----------------------------------------------------
 
     // 🔹 Load all libraries
+    // useEffect(() => {
+    //     const loadLibraries = async () => {
+    //         const libOps = LibraryOps();
+    //         const allLibs = await libOps.getAllLibraries(props);
+    //         setLibraries(allLibs);
+    //         setBaseLibraries(allLibs);
+
+    //         const found = allLibs.find((l) => l.Title === libraryName);
+
+    //         const updatedActive = translatedLibraries.find(l => l.Title === libraryName);
+    //         const isArabicFound = isArabic ? translatedLibraries.find(l => l.Title === libraryName) : allLibs.find((l) => l.Title === libraryName)
+    //         if (found) {
+    //             setActiveLibrary(isArabicFound);
+    //             setCurrentFolder(null);
+    //             setBreadcrumb([]);
+    //         }
+    //     };
+    //     loadLibraries();
+    // }, [libraryName]);
+
+
     useEffect(() => {
         const loadLibraries = async () => {
             const libOps = LibraryOps();
             const allLibs = await libOps.getAllLibraries(props);
+
             setLibraries(allLibs);
             setBaseLibraries(allLibs);
 
-            const found = allLibs.find((l) => l.Title === libraryName);
+            // 🔹 Load icons dynamically
+            const iconMap = await loadLibraryIcons();
+            setLibraryIcons(iconMap);
 
-            const updatedActive = translatedLibraries.find(l => l.Title === libraryName);
-            const isArabicFound = isArabic ? translatedLibraries.find(l => l.Title === libraryName) : allLibs.find((l) => l.Title === libraryName)
+            const found = allLibs.find((l) => l.Title?.toLowerCase() === libraryName?.toLowerCase());
+
+            const isArabicFound = isArabic
+                ? translatedLibraries.find(
+                    (l) => l.Title?.toLowerCase() === libraryName?.toLowerCase()
+                )
+                : found;
+
             if (found) {
                 setActiveLibrary(isArabicFound);
                 setCurrentFolder(null);
                 setBreadcrumb([]);
             }
         };
+
         loadLibraries();
     }, [libraryName]);
+
 
     const currentPath = location.pathname.toLowerCase();
     const isDashboard = currentPath.includes("/dashboard");
@@ -885,150 +912,6 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
     };
 
 
-    // const handleCreateFolder = async () => {
-    //     if (!newFolderName.trim()) {
-    //         message.error("Folder name cannot be empty!");
-    //         return;
-    //     }
-
-    //     const webAbsoluteUrl = props.context.pageContext.web.absoluteUrl;
-    //     const folderUrl = currentFolder || activeLibrary?.RootFolder.ServerRelativeUrl;
-    //     if (!folderUrl) return;
-
-    //     setLoading(true);
-
-    //     try {
-    //         const fullFolderPath = `${folderUrl}/${newFolderName}`.replace(/\/+/g, "/");
-
-    //         // 1️⃣ Check if folder already exists
-    //         const existsResponse = await fetch(
-    //             `${webAbsoluteUrl}/_api/web/getfolderbyserverrelativeurl('${fullFolderPath}')`,
-    //             { method: "GET", headers: { Accept: "application/json;odata=verbose" } }
-    //         );
-
-    //         if (existsResponse.ok) {
-    //             message.warning(`A folder named '${newFolderName}' already exists.`);
-    //             setLoading(false);
-    //             return;
-    //         }
-
-    //         // 2️⃣ Create the folder
-    //         const newFolder = await sp.web
-    //             .getFolderByServerRelativePath(folderUrl)
-    //             .folders.addUsingPath(newFolderName);
-
-    //         const folderItemUrl = `${webAbsoluteUrl}/_api/web/getfolderbyserverrelativeurl('${fullFolderPath}')/ListItemAllFields`;
-
-    //         // 3️⃣ Get Request Digest
-    //         const digestResponse = await fetch(`${webAbsoluteUrl}/_api/contextinfo`, {
-    //             method: "POST",
-    //             headers: { Accept: "application/json;odata=verbose" },
-    //         });
-    //         const digestData = await digestResponse.json();
-    //         const requestDigest = digestData.d.GetContextWebInformation.FormDigestValue;
-
-    //         // 4️⃣ Break permission inheritance
-    //         await fetch(`${folderItemUrl}/breakroleinheritance(copyRoleAssignments=false, clearSubscopes=true)`, {
-    //             method: "POST",
-    //             headers: {
-    //                 Accept: "application/json;odata=verbose",
-    //                 "X-RequestDigest": requestDigest,
-    //             },
-    //         });
-
-    //         // 5️⃣ Get Role Definitions
-    //         const roleDefsResponse = await fetch(`${webAbsoluteUrl}/_api/web/roledefinitions`, {
-    //             method: "GET",
-    //             headers: { Accept: "application/json;odata=verbose" },
-    //         });
-    //         const roleDefsData = await roleDefsResponse.json();
-    //         const roleDefinitions = roleDefsData.d.results;
-
-    //         const docEditorsRole = roleDefinitions.find((r: any) => r.Name === "DocumentEditors");
-    //         const docViewRole = roleDefinitions.find((r: any) => r.Name === "DocumentView");
-
-    //         if (!docEditorsRole || !docViewRole) {
-    //             message.error("Custom permission levels 'DocumentEditors' or 'DocumentView' not found.");
-    //             return;
-    //         }
-
-    //         // 6️⃣ Assign "DocumentEditors" permissions
-    //         for (const user of selectedUsers) {
-    //             try {
-    //                 const encodedLoginName = encodeURIComponent(user.loginName);
-    //                 const userInfoRes = await fetch(`${webAbsoluteUrl}/_api/web/ensureuser('${encodedLoginName}')`, {
-    //                     method: "POST",
-    //                     headers: {
-    //                         Accept: "application/json;odata=verbose",
-    //                         "Content-Type": "application/json;odata=verbose",
-    //                         "X-RequestDigest": requestDigest,
-    //                     },
-    //                 });
-    //                 const userInfoData = await userInfoRes.json();
-    //                 const userId = userInfoData.d.Id;
-
-    //                 await fetch(
-    //                     `${folderItemUrl}/roleassignments/addroleassignment(principalid=${userId},roledefid=${docEditorsRole.Id})`,
-    //                     {
-    //                         method: "POST",
-    //                         headers: {
-    //                             Accept: "application/json;odata=verbose",
-    //                             "X-RequestDigest": requestDigest,
-    //                         },
-    //                     }
-    //                 );
-    //             } catch (err) {
-    //                 console.warn(`Failed to assign DocumentEditors to ${user.loginName}:`, err);
-    //             }
-    //         }
-
-    //         // 7️⃣ Assign "DocumentView" permissions
-    //         for (const user of viewUsers) {
-    //             try {
-    //                 const encodedLoginName = encodeURIComponent(user.loginName);
-    //                 const userInfoRes = await fetch(`${webAbsoluteUrl}/_api/web/ensureuser('${encodedLoginName}')`, {
-    //                     method: "POST",
-    //                     headers: {
-    //                         Accept: "application/json;odata=verbose",
-    //                         "Content-Type": "application/json;odata=verbose",
-    //                         "X-RequestDigest": requestDigest,
-    //                     },
-    //                 });
-    //                 const userInfoData = await userInfoRes.json();
-    //                 const userId = userInfoData.d.Id;
-
-    //                 await fetch(
-    //                     `${folderItemUrl}/roleassignments/addroleassignment(principalid=${userId},roledefid=${docViewRole.Id})`,
-    //                     {
-    //                         method: "POST",
-    //                         headers: {
-    //                             Accept: "application/json;odata=verbose",
-    //                             "X-RequestDigest": requestDigest,
-    //                         },
-    //                     }
-    //                 );
-    //             } catch (err) {
-    //                 console.warn(`Failed to assign DocumentView to ${user.loginName}:`, err);
-    //             }
-    //         }
-
-    //         // 8️⃣ Final success & UI refresh
-    //         message.success(`Folder '${newFolderName}' created with custom permissions.`);
-    //         closeModal();
-    //         setNewFolderName("");
-
-    //         // 🔄 Force reload items in table (same trick as file upload)
-    //         setCurrentFolder(null);
-    //         setTimeout(() => setCurrentFolder(folderUrl), 0);
-    //     } catch (err) {
-    //         console.error("Error creating folder with permissions:", err);
-    //         message.error("An error occurred while creating the folder or assigning permissions.");
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
-
 
     // 📌 Upload file
 
@@ -1258,20 +1141,49 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         }
     ];
 
-    const libraryIconMap: { [key: string]: string } = {
-        "Chairman Office": "fas fa-briefcase",
-        "Economic Regulation and Markets": "fas fa-balance-scale",
-        "Energy": "fas fa-bolt",
-        "Legal and Customer Affairs": "fas fa-gavel",
-        "Planning and Institutional Performance Development": "fas fa-chart-line",
-        "Sustainable Energy": "fas fa-leaf",
-        "Water and Wastewater": "fas fa-tint",
+    // const libraryIconMap: { [key: string]: string } = {
+    //     "Chairman Office": "fas fa-briefcase",
+    //     "Economic Regulation and Markets": "fas fa-balance-scale",
+    //     "Energy": "fas fa-bolt",
+    //     "Legal and Customer Affairs": "fas fa-gavel",
+    //     "Planning and Institutional Performance Development": "fas fa-chart-line",
+    //     "Sustainable Energy": "fas fa-leaf",
+    //     "Water and Wastewater": "fas fa-tint",
+    // };
+
+
+    const loadLibraryIcons = async (): Promise<{ [key: string]: string }> => {
+        const items = await sp.web.lists
+            .getByTitle("Icons")
+            .items.select("RepositoryName", "IconName")();
+
+        const iconMap: { [key: string]: string } = {};
+
+        items.forEach((item) => {
+            if (item.RepositoryName && item.IconName) {
+                iconMap[item.RepositoryName.toLowerCase().trim()] =
+                    item.IconName.trim();
+            }
+        });
+
+        return iconMap;
     };
 
+
+
+    // const getLibraryIcon = (title: string) => {
+    //     return libraryIconMap[title] || ""; // default icon
+    // };
 
     const getLibraryIcon = (title: string) => {
-        return libraryIconMap[title] || ""; // default icon
+        if (!title) return "";
+
+        return (
+            libraryIcons[title.toLowerCase().trim()] ||
+            "fas fa-folder" // ✅ default icon
+        );
     };
+
 
 
 
@@ -1304,12 +1216,13 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                     <div className="navmainsection">
                         <ul className="nav-tabs">
                             <li>
-                                <div className="lang-toggle">
+                                <div className={isArabic ? "erp-lang-toggle" : "lang-toggle"}>
                                     <button
                                         className={`lang-btn ${language === "en" ? "active" : ""}`}
                                         onClick={handleTranslateClick}
                                     >
-                                        <span className="icon">🌐</span>
+                                        {/* <span className="icon">🌐</span> */}
+                                        <i className="fas fa-globe-americas icon"></i>
                                         ENG
                                     </button>
 
@@ -1317,7 +1230,8 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                                         className={`lang-btn ${language === "ar" ? "active" : ""}`}
                                         onClick={handleTranslateClick}
                                     >
-                                        <span className="icon">🌐</span>
+                                        {/* <span className="icon">🌐</span> */}
+                                        <i className="fas fa-globe-asia icon"></i>
                                         العربية
                                     </button>
                                 </div>
@@ -1337,6 +1251,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                         />
                     </div>
                 </div>
+                <div className="Headlinetwo"></div>
             </div>
 
             {/* Library Tabs */}
@@ -1389,7 +1304,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                                         navigate(`/library/${lib.Title}`, {
                                             state: { isArabic }
                                         })
-                                    } 
+                                    }
                                     style={{ cursor: "pointer" }}
                                 >
                                     <div className="erp-card">
@@ -1429,7 +1344,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                     </div>
 
                     {!searchQuery && (
-                        <div className="sliderButtons">
+                        <div className={isArabic ? "erp-sliderButtons" : "sliderButtons"}>
                             <button className="sliderBtn left" onClick={prevLibrary} disabled={currentIndex === 0}>
                                 <img src={leftblack} alt="Previous" className="iconblack" />
                             </button>
