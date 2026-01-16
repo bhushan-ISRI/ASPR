@@ -66,7 +66,7 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
     const [libraries, setLibraries] = useState<ILibrary[]>([]);
     const [fileList, setFileList] = React.useState<File[]>([]);
     const navigate = useNavigate();
-const [translatedLibraryName, setTranslatedLibraryName] = useState<string>(libraryName || "");
+    const [translatedLibraryName, setTranslatedLibraryName] = useState<string>(libraryName || "");
     const peoplePickerContext: IPeoplePickerContext = {
         msGraphClientFactory: props.currentSPContext.msGraphClientFactory as unknown as IPeoplePickerContext["msGraphClientFactory"],
         spHttpClient: props.currentSPContext.spHttpClient as unknown as IPeoplePickerContext["spHttpClient"],
@@ -114,18 +114,18 @@ const [translatedLibraryName, setTranslatedLibraryName] = useState<string>(libra
         setNewFile("");
     };
     useEffect(() => {
-            const translateLibraryName = async () => {
-        if (!libraryName) return;
+        const translateLibraryName = async () => {
+            if (!libraryName) return;
 
-        if (!isArabic) {
-            setTranslatedLibraryName(libraryName);
-            return;
-        }
+            if (!isArabic) {
+                setTranslatedLibraryName(libraryName);
+                return;
+            }
 
-        const translated = await translateText(libraryName, "ar");
-        setTranslatedLibraryName(translated || libraryName);
-    };
-    translateLibraryName();
+            const translated = await translateText(libraryName, "ar");
+            setTranslatedLibraryName(translated || libraryName);
+        };
+        translateLibraryName();
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 dropdownRef.current &&
@@ -145,7 +145,7 @@ const [translatedLibraryName, setTranslatedLibraryName] = useState<string>(libra
             document.removeEventListener("mousedown", handleClickOutside);
         };
 
-        
+
     }, [isOpen]);
     // 🔹 Load files
     const toggleDropdown = () => setIsOpen(!isOpen);
@@ -249,47 +249,47 @@ const [translatedLibraryName, setTranslatedLibraryName] = useState<string>(libra
 
         loadFiles();
     }, [libraryName, currentFolder]);
-useEffect(() => {
-    if (!isArabic) return;
+    useEffect(() => {
+        if (!isArabic) return;
 
-    const updateBreadcrumbTranslations = async () => {
-        const updated = await Promise.all(
-            breadcrumb.map(async (b) => ({
-                ...b,
-                TranslatedName: b.TranslatedName || await translateText(b.Name, "ar")
-            }))
-        );
+        const updateBreadcrumbTranslations = async () => {
+            const updated = await Promise.all(
+                breadcrumb.map(async (b) => ({
+                    ...b,
+                    TranslatedName: b.TranslatedName || await translateText(b.Name, "ar")
+                }))
+            );
 
-        setBreadcrumb(updated);
-    };
+            setBreadcrumb(updated);
+        };
 
-    updateBreadcrumbTranslations();
-}, [isArabic]);
+        updateBreadcrumbTranslations();
+    }, [isArabic]);
 
     // 🔹 Click handler
-  const handleItemClick = (item: IFileItem) => {
-    if (item.IsFolder) {
-        setBreadcrumb(prev => {
-            // 🔹 Avoid duplicates
-            if (prev.find(b => b.ServerRelativeUrl === item.ServerRelativeUrl)) {
-                return prev;
-            }
-
-            return [
-                ...prev,
-                {
-                    ...item,
-                    // ✅ ensure breadcrumb has translated name
-                    TranslatedName: item.TranslatedName || item.Name
+    const handleItemClick = (item: IFileItem) => {
+        if (item.IsFolder) {
+            setBreadcrumb(prev => {
+                // 🔹 Avoid duplicates
+                if (prev.find(b => b.ServerRelativeUrl === item.ServerRelativeUrl)) {
+                    return prev;
                 }
-            ];
-        });
 
-        setCurrentFolder(item.ServerRelativeUrl);
-    } else {
-        window.open(item.ServerRelativeUrl + "?web=1", "_blank");
-    }
-};
+                return [
+                    ...prev,
+                    {
+                        ...item,
+                        // ✅ ensure breadcrumb has translated name
+                        TranslatedName: item.TranslatedName || item.Name
+                    }
+                ];
+            });
+
+            setCurrentFolder(item.ServerRelativeUrl);
+        } else {
+            window.open(item.ServerRelativeUrl + "?web=1", "_blank");
+        }
+    };
 
 
     // 🔹 Breadcrumb click
@@ -714,10 +714,10 @@ useEffect(() => {
             message.error(`Error deleting ${item.Name}`);
         }
     };
-     
+
     return (
-        <div  className={`document-page ${isArabic ? "rtl" : "ltr"}`}
-  dir={isArabic ? "rtl" : "ltr"}>
+        <div className={`document-page ${isArabic ? "rtl" : "ltr"}`}
+            dir={isArabic ? "rtl" : "ltr"}>
             <h2 style={{ background: "#006a5d", color: "white" }}>
                 {isArabic
                     ? `المجلدات والملفات في ${translatedLibraryName}`
@@ -752,17 +752,21 @@ useEffect(() => {
                         setCurrentFolder(null);
                     }}
                 >
-{isArabic ? translatedLibraryName : libraryName}
+                    {isArabic ? translatedLibraryName : libraryName}
                 </span>
-
+                <i className="fas fa-angle-right"></i>
                 {breadcrumb.map((b, i) => (
+                    <>
                     <span
                         key={i}
                         className="arrow-crumb"
                         onClick={() => handleBreadcrumbClick(i)}
                     >
-{isArabic ? (b.TranslatedName || b.Name) : b.Name}
+                        {isArabic ? (b.TranslatedName || b.Name) : b.Name}
+                        
                     </span>
+                    <i className="fas fa-angle-right"></i>
+                    </>
                 ))}
             </div>
 
