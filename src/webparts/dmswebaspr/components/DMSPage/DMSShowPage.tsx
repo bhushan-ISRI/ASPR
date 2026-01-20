@@ -40,9 +40,12 @@ interface IFolderWithListItem extends IFolderInfo {
     Author: any;
     ListItemAllFields?: {
         FullName?: string;
+        Modified?: string;
+        Author: {
+            Title: string;
+        };
     };
 }
-
 export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
     const { libraryName } = useParams<{ libraryName: string }>();
     const sp = spfi().using(SPFx(props.context));
@@ -58,6 +61,8 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
     const [isOpen, setIsOpen] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
+    const [newFoldershortName, setNewFoldershortName] = useState("");
+
     const [newFile, setNewFile] = useState("");
     const [showModalFile, setShowModalFile] = useState(false);
     const [selectedUsers, setSelectedUsers] = React.useState<any[]>([]);
@@ -185,12 +190,12 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
 
                 // 🔹 Fetch subfolders
                 const subFolders = await folder.folders
-                    .select("Name", "TimeLastModified", "ServerRelativeUrl", "ListItemAllFields/FullName")
-                    .expand("ListItemAllFields")() as unknown as IFolderWithListItem[];;
+                    .select("Name", "Modified", "ServerRelativeUrl", "ListItemAllFields/FullName", "ListItemAllFields/Modified", "ListItemAllFields/Author")
+                    .expand("Author", "ListItemAllFields")() as unknown as IFolderWithListItem[];
 
                 // 🔹 Fetch files
                 const fileItems = await folder.files
-                    .select("Name", "TimeLastModified", "ServerRelativeUrl", "Author/Title", "ListItemAllFields/FullName")
+                    .select("Name", "Modified", "ServerRelativeUrl", "Author/Title", "ListItemAllFields/FullName", "ListItemAllFields/Modified", "ListItemAllFields/Author")
                     .expand("Author", "ListItemAllFields")() as unknown as IFolderWithListItem[];
                 const safeTranslate = async (text: string) => {
                     // No translation needed when in English mode
@@ -212,8 +217,8 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
                             return {
                                 Name: f.Name,
                                 FullName: f.ListItemAllFields?.FullName || f.Name,
-                                TimeLastModified: "",
-                                AuthorTitle: "",
+                                TimeLastModified: f.ListItemAllFields?.Modified,
+                                AuthorTitle: f.ListItemAllFields?.Author?.Title || "",
                                 IsFolder: true,
                                 ServerRelativeUrl: f.ServerRelativeUrl,
                                 TranslatedName: translatedName
@@ -227,7 +232,7 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
 
                         return {
                             Name: f.Name,
-                            TimeLastModified: f.TimeLastModified,
+                            TimeLastModified: f.ListItemAllFields?.Modified,
                             FullName: f.ListItemAllFields?.FullName || f.Name,
                             AuthorTitle: f.Author?.Title || "",
                             IsFolder: false,
@@ -298,9 +303,79 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
         setBreadcrumb(path);
         setCurrentFolder(path[path.length - 1].ServerRelativeUrl);
     };
+const hasType = (value: number, type: number) => {
+  return (value & type) === type;
+};
+
+const assignPermissions = async (
+  principals: any[],
+  roleDefId: number,
+  folderItemUrl: string,
+  webAbsoluteUrl: string,
+  requestDigest: string
+) => {
+  for (const p of principals) {
+    try {
+      let principalId: number | null = null;
+
+      // 🟢 CASE 1: SharePoint Group (NO claims login)
+      if (!p.loginName || !p.loginName.includes("|")) {
+        const res = await fetch(
+          `${webAbsoluteUrl}/_api/web/sitegroups/getbyname('${encodeURIComponent(p.text)}')`,
+          { headers: { Accept: "application/json;odata=verbose" } }
+        );
+
+        if (!res.ok) {
+          console.error("SP Group not found:", p.text);
+          continue;
+        }
+
+        const data = await res.json();
+        principalId = data.d.Id;
+      }
+
+      // 🟢 CASE 2: User or Security Group
+      else {
+        const ensureRes = await fetch(
+          `${webAbsoluteUrl}/_api/web/ensureuser('${encodeURIComponent(p.loginName)}')`,
+          {
+            method: "POST",
+            headers: {
+              Accept: "application/json;odata=verbose",
+              "Content-Type": "application/json;odata=verbose",
+              "X-RequestDigest": requestDigest
+            }
+          }
+        );
+
+        const ensureData = await ensureRes.json();
+        principalId = ensureData.d.Id;
+      }
+
+      if (!principalId) continue;
+
+      // ✅ Assign role
+      await fetch(
+        `${folderItemUrl}/roleassignments/addroleassignment(principalid=${principalId},roledefid=${roleDefId})`,
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json;odata=verbose",
+            "X-RequestDigest": requestDigest
+          }
+        }
+      );
+
+    } catch (e) {
+      console.error("Permission failed for:", p.text || p.loginName, e);
+    }
+  }
+};
+
+
     const handleCreateFolder = async () => {
-        if (!newFolderName.trim()) {
-            message.error("Folder name cannot be empty!");
+        if (!newFolderName.trim() || !newFoldershortName.trim()) {
+            message.error("Folder name and short name are required!");
             return;
         }
 
@@ -311,148 +386,109 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
         setLoading(true);
 
         try {
-            // 🔹 Generate ShortName
-            const shortName = newFolderName
-                .split(" ")
-                .filter(w => w.toLowerCase() !== "and" && w.trim() !== "")
-                .map(w => w[0].toUpperCase())
-                .join("");
+            const shortName = newFoldershortName.trim();
+            const fullFolderPath = `${folderUrl}/${shortName}`.replace(/\/+/g, "/");
 
-            const fullFolderPath = `${folderUrl}/${shortName}`.replace(/\/+/g, "/"); // use ShortName
-
-            // 1️⃣ Check if folder already exists
+            // 1️⃣ Check if folder exists
             const existsResponse = await fetch(
                 `${webAbsoluteUrl}/_api/web/getfolderbyserverrelativeurl('${fullFolderPath}')`,
                 { method: "GET", headers: { Accept: "application/json;odata=verbose" } }
             );
 
             if (existsResponse.ok) {
-                message.warning(`A folder with short name '${shortName}' already exists.`);
-                setLoading(false);
+                message.warning(`Folder '${shortName}' already exists.`);
                 return;
             }
 
-            // 2️⃣ Create folder with ShortName
-            const newFolder = await sp.web
+            // 2️⃣ Create folder
+            await sp.web
                 .getFolderByServerRelativePath(folderUrl)
                 .folders.addUsingPath(shortName);
 
-            const folderItemUrl = `${webAbsoluteUrl}/_api/web/getfolderbyserverrelativeurl('${fullFolderPath}')/ListItemAllFields`;
+            const folderItemUrl =
+                `${webAbsoluteUrl}/_api/web/getfolderbyserverrelativeurl('${fullFolderPath}')/ListItemAllFields`;
 
             // 3️⃣ Get Request Digest
-            const digestResponse = await fetch(`${webAbsoluteUrl}/_api/contextinfo`, {
+            const digestRes = await fetch(`${webAbsoluteUrl}/_api/contextinfo`, {
                 method: "POST",
-                headers: { Accept: "application/json;odata=verbose" },
+                headers: { Accept: "application/json;odata=verbose" }
             });
-            const digestData = await digestResponse.json();
+            const digestData = await digestRes.json();
             const requestDigest = digestData.d.GetContextWebInformation.FormDigestValue;
 
-            // 4️⃣ Update "FullName" field with original name
-            const folderItem = await sp.web.getFolderByServerRelativePath(fullFolderPath).getItem();
+            // 4️⃣ Update FullName
+            const folderItem = await sp.web
+                .getFolderByServerRelativePath(fullFolderPath)
+                .getItem();
             await folderItem.update({ FullName: newFolderName });
 
             // 5️⃣ Break inheritance
-            await fetch(`${folderItemUrl}/breakroleinheritance(copyRoleAssignments=false, clearSubscopes=true)`, {
-                method: "POST",
-                headers: {
-                    Accept: "application/json;odata=verbose",
-                    "X-RequestDigest": requestDigest,
-                },
-            });
+            await fetch(
+                `${folderItemUrl}/breakroleinheritance(copyRoleAssignments=false, clearSubscopes=true)`,
+                {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json;odata=verbose",
+                        "X-RequestDigest": requestDigest
+                    }
+                }
+            );
 
             // 6️⃣ Get Role Definitions
+            // 6️⃣ Get Role Definitions
             const roleDefsResponse = await fetch(`${webAbsoluteUrl}/_api/web/roledefinitions`, {
-                method: "GET",
-                headers: { Accept: "application/json;odata=verbose" },
+                headers: { Accept: "application/json;odata=verbose" }
             });
             const roleDefsData = await roleDefsResponse.json();
-            const roleDefinitions = roleDefsData.d.results;
 
-            const docEditorsRole = roleDefinitions.find((r: any) => r.Name === "DocumentEditors");
-            const docViewRole = roleDefinitions.find((r: any) => r.Name === "DocumentView");
+            const docEditorsRole = roleDefsData.d.results.find((r: any) => r.Name === "DocumentEditors");
+            const docViewRole = roleDefsData.d.results.find((r: any) => r.Name === "DocumentView");
 
             if (!docEditorsRole || !docViewRole) {
-                message.error("Custom permission levels 'DocumentEditors' or 'DocumentView' not found.");
+                message.error("Custom permission levels not found.");
                 return;
             }
-
-            // 7️⃣ Assign "DocumentEditors" permissions
-            for (const user of selectedUsers) {
-                try {
-                    const encodedLoginName = encodeURIComponent(user.loginName);
-                    const userInfoRes = await fetch(`${webAbsoluteUrl}/_api/web/ensureuser('${encodedLoginName}')`, {
-                        method: "POST",
-                        headers: {
-                            Accept: "application/json;odata=verbose",
-                            "Content-Type": "application/json;odata=verbose",
-                            "X-RequestDigest": requestDigest,
-                        },
-                    });
-                    const userInfoData = await userInfoRes.json();
-                    const userId = userInfoData.d.Id;
-
-                    await fetch(
-                        `${folderItemUrl}/roleassignments/addroleassignment(principalid=${userId},roledefid=${docEditorsRole.Id})`,
-                        {
-                            method: "POST",
-                            headers: {
-                                Accept: "application/json;odata=verbose",
-                                "X-RequestDigest": requestDigest,
-                            },
-                        }
-                    );
-                } catch (err) {
-                    console.warn(`Failed to assign DocumentEditors to ${user.loginName}:`, err);
-                }
-            }
-
-            // 8️⃣ Assign "DocumentView" permissions
-            for (const user of viewUsers) {
-                try {
-                    const encodedLoginName = encodeURIComponent(user.loginName);
-                    const userInfoRes = await fetch(`${webAbsoluteUrl}/_api/web/ensureuser('${encodedLoginName}')`, {
-                        method: "POST",
-                        headers: {
-                            Accept: "application/json;odata=verbose",
-                            "Content-Type": "application/json;odata=verbose",
-                            "X-RequestDigest": requestDigest,
-                        },
-                    });
-                    const userInfoData = await userInfoRes.json();
-                    const userId = userInfoData.d.Id;
-
-                    await fetch(
-                        `${folderItemUrl}/roleassignments/addroleassignment(principalid=${userId},roledefid=${docViewRole.Id})`,
-                        {
-                            method: "POST",
-                            headers: {
-                                Accept: "application/json;odata=verbose",
-                                "X-RequestDigest": requestDigest,
-                            },
-                        }
-                    );
-                } catch (err) {
-                    console.warn(`Failed to assign DocumentView to ${user.loginName}:`, err);
-                }
-            }
-
-            // ✅ Final success
-            message.success(
-                `Folder '${newFolderName}' created (ShortName: '${shortName}') with custom permissions.`
+ await assignPermissions(
+                selectedUsers,
+                docEditorsRole.Id,
+                folderItemUrl,
+                webAbsoluteUrl,
+                requestDigest
             );
+
+            await assignPermissions(
+                viewUsers,
+                docViewRole.Id,
+                folderItemUrl,
+                webAbsoluteUrl,
+                requestDigest
+            );
+            // 7️⃣ Assign permissions (FIXED)
+           
+
+
+            // 🔐 COMMON FUNCTION TO ASSIGN PERMISSIONS
+
+
+            // 7️⃣ Assign permissions
+            // await assignPermissions(selectedUsers, docEditorsRole.Id, folderItemUrl, webAbsoluteUrl, requestDigest);
+            //  await assignPermissions(viewUsers, docViewRole.Id, folderItemUrl, webAbsoluteUrl, requestDigest);
+
+            message.success(`Folder '${newFolderName}' created with permissions.`);
             closeModal();
             setNewFolderName("");
+            setNewFoldershortName("");
 
-            // 🔄 Refresh UI
             setCurrentFolder(null);
             setTimeout(() => setCurrentFolder(folderUrl), 0);
         } catch (err) {
-            console.error("Error creating folder with permissions:", err);
-            message.error("An error occurred while creating the folder or assigning permissions.");
+            console.error(err);
+            message.error("Error creating folder or assigning permissions.");
         } finally {
             setLoading(false);
         }
     };
+
     const handleFileUpload = async (fileList: File[]) => {
         if (!activeLibrary) {
             message.error("No active library selected.");
@@ -757,15 +793,15 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
                 <i className="fas fa-angle-right"></i>
                 {breadcrumb.map((b, i) => (
                     <>
-                    <span
-                        key={i}
-                        className="arrow-crumb"
-                        onClick={() => handleBreadcrumbClick(i)}
-                    >
-                        {isArabic ? (b.TranslatedName || b.Name) : b.Name}
-                        
-                    </span>
-                    <i className="fas fa-angle-right"></i>
+                        <span
+                            key={i}
+                            className="arrow-crumb"
+                            onClick={() => handleBreadcrumbClick(i)}
+                        >
+                            {isArabic ? (b.TranslatedName || b.Name) : b.Name}
+
+                        </span>
+                        <i className="fas fa-angle-right"></i>
                     </>
                 ))}
             </div>
@@ -841,6 +877,11 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
                                 className="modelinput"
                             />
 
+                            <div className="">
+                                <label htmlFor="FoldershortName">{isArabic ? "اسم المجلداسم المجلد المختصر" : "Folder Short Name"}</label>
+                                <input placeholder="Enter new folder short name" value={newFoldershortName} onChange={(e) => setNewFoldershortName(e.target.value)} className="modelinput" />
+                            </div>
+
                             <div style={{ marginTop: 10, marginBottom: 10, textAlign: "left" }}>
                                 <label htmlFor="Edit">{isArabic ? "يحرر" : "Edit"}</label>
                                 <PeoplePicker
@@ -853,7 +894,12 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
                                     disabled={false}
                                     onChange={(items: any[]) => setSelectedUsers(items)} // ✅ correct usage
                                     showHiddenInUI={false}
-                                    principalTypes={[PrincipalType.User]}
+                                    principalTypes={[
+                                        PrincipalType.User,
+                                        PrincipalType.SharePointGroup,
+                                        PrincipalType.SecurityGroup,
+                                        PrincipalType.DistributionList
+                                    ]}
                                     resolveDelay={1000}
                                 />
                             </div>
@@ -870,7 +916,12 @@ export const LibraryDocuments: React.FC<IDmswebasprProps> = (props) => {
                                     onChange={(items: any[]) => setViewUsers(items)}
 
                                     showHiddenInUI={false}
-                                    principalTypes={[PrincipalType.User]}
+                                    principalTypes={[
+                                        PrincipalType.User,
+                                        PrincipalType.SharePointGroup,
+                                        PrincipalType.SecurityGroup,
+                                        PrincipalType.DistributionList
+                                    ]}
                                     resolveDelay={1000}
                                 />
                             </div>
