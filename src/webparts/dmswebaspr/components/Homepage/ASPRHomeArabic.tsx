@@ -1076,10 +1076,11 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         const nextIsArabic = !isArabic;
 
         // ✅ SAVE GLOBALLY
-        localStorage.setItem("isArabic", nextIsArabic.toString());
 
         setIsArabic(nextIsArabic);
         setLanguage(nextIsArabic ? "ar" : "en");
+                localStorage.setItem("isArabic", nextIsArabic ? "ar" : "en");
+
         setCurrentIndex(0);
     };
 
