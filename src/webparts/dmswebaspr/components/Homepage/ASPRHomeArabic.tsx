@@ -55,6 +55,7 @@ import logoname from "../../assets/img/LogoName.png";
 import rightblack from "../../assets/img/Right.png";
 import leftblack from "../../assets/img/Left.png";
 import link from "../../assets/img/link.png";
+import { getArabicTranslation } from "../../services/bal/ArabicTranslation";
 
 // ----------------------------------------------------------------
 
@@ -161,6 +162,15 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
 
     const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+       // --------------------------------------- Banner part ---------------------------------------
+
+    BannerOps().getTopBanner("*,Id,EncodedAbsUrl,FileLeafRef,FileDirRef,FileRef,FSObjType,Created,Status", "",
+        "Status eq 'Active'", { column: 'Created', isAscending: false }, 1000, props)
+        .then(results => {
+            setBannerItems(results);
+        });
+    // --------------------------------------- End Banner part ---------------------------------------
+
     useEffect(() => {
         const syncLanguage = () => {
             setIsArabic(localStorage.getItem("isArabic") === "ar");
@@ -189,7 +199,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
             const translated = await Promise.all(
                 baseLibraries.map(async (lib: any) => ({
                     ...lib,
-                    TranslatedTitle: await translateText(lib.Title, "ar"),
+                    TranslatedTitle: await translateText(lib.Title),
                 }))
             );
 
@@ -256,13 +266,19 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         };
     }, [isOpen]);
 
-    // --------------------------------------- Banner part ---------------------------------------
+    useEffect(() => {
+  const handleSearch = (e: any) => {
+    setSearchQuery(e.detail || "");
+  };
 
-    BannerOps().getTopBanner("*,Id,EncodedAbsUrl,FileLeafRef,FileDirRef,FileRef,FSObjType,Created,Status", "",
-        "Status eq 'Active'", { column: 'Created', isAscending: false }, 1000, props)
-        .then(results => {
-            setBannerItems(results);
-        });
+  window.addEventListener("librarySearch", handleSearch);
+
+  return () => {
+    window.removeEventListener("librarySearch", handleSearch);
+  };
+}, []);
+
+ 
 
 
     // ----------------------   Banner Slider ---------------------------------
@@ -374,7 +390,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         const mappedFiles: IFileItem[] = await Promise.all(
             files.map(async (f: any) => {
                 const translatedName = isArabic
-                    ? await translateText(f.Name, "ar")
+                    ? await translateText(f.Name)
                     : f.Name;
 
                 return {
@@ -418,27 +434,6 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         loadUserProfile();
     }, []);
     // ----------------------------------------------------
-
-    // 🔹 Load all libraries
-    // useEffect(() => {
-    //     const loadLibraries = async () => {
-    //         const libOps = LibraryOps();
-    //         const allLibs = await libOps.getAllLibraries(props);
-    //         setLibraries(allLibs);
-    //         setBaseLibraries(allLibs);
-
-    //         const found = allLibs.find((l) => l.Title === libraryName);
-
-    //         const updatedActive = translatedLibraries.find(l => l.Title === libraryName);
-    //         const isArabicFound = isArabic ? translatedLibraries.find(l => l.Title === libraryName) : allLibs.find((l) => l.Title === libraryName)
-    //         if (found) {
-    //             setActiveLibrary(isArabicFound);
-    //             setCurrentFolder(null);
-    //             setBreadcrumb([]);
-    //         }
-    //     };
-    //     loadLibraries();
-    // }, [libraryName]);
 
 
     useEffect(() => {
@@ -504,7 +499,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                     if (!isArabic) return text;
 
                     // Already Arabic translation exists?
-                    const translated = await translateText(text, "ar");
+                    const translated = await translateText(text);
                     return translated || text;
                 };
 
@@ -554,23 +549,26 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
 
 
     // Translate text Dynamically 
-    const translateText = async (text: string, toLang: string): Promise<string> => {
-        try {
-            if (toLang === "en") {
-                return text;
-            }
-            const response = await fetch(
-                `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${toLang}`
-            );
-            const data = await response.json();
-            return data.responseData.translatedText;
-        } catch (err) {
-            console.error("Translation error:", err);
-            return text; // fallback to original
-        }
-    };
+    // const translateText = async (text: string, toLang: string): Promise<string> => {
+    //     try {
+    //         if (toLang === "en") {
+    //             return text;
+    //         }
+    //         const response = await fetch(
+    //             `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${toLang}`
+    //         );
+    //         const data = await response.json();
+    //         return data.responseData.translatedText;
+    //     } catch (err) {
+    //         console.error("Translation error:", err);
+    //         return text; // fallback to original
+    //     }
+    // };
 
-
+const translateText = async (text: string): Promise<string> => {
+  if (!isArabic) return text;
+  return await getArabicTranslation(sp, text);
+};
 
 
     //  Load recent files across entire library
@@ -1069,12 +1067,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         }
     };
 
-    // const filteredLibraries = (searchQuery
-    //     ? libraries.filter((lib) =>
-    //         lib.Title.toLowerCase().includes(searchQuery.toLowerCase())
-    //     )
-    //     : visibleLibraries
-    // );
+    
 
     const filteredLibraries = React.useMemo(() => {
         const libsToUse = isArabic ? translatedLibraries : baseLibraries;
@@ -1102,7 +1095,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         if (!isArabic && translatedLibraries.length === 0) {
             const translatedLibs = await Promise.all(
                 baseLibraries.map(async (lib) => {
-                    const translatedTitle = await translateText(lib.Title, targetLang);
+                    const translatedTitle = await translateText(lib.Title);
                     return { ...lib, TranslatedTitle: translatedTitle };
                 })
             );
@@ -1201,16 +1194,7 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
         }
     ];
 
-    // const libraryIconMap: { [key: string]: string } = {
-    //     "Chairman Office": "fas fa-briefcase",
-    //     "Economic Regulation and Markets": "fas fa-balance-scale",
-    //     "Energy": "fas fa-bolt",
-    //     "Legal and Customer Affairs": "fas fa-gavel",
-    //     "Planning and Institutional Performance Development": "fas fa-chart-line",
-    //     "Sustainable Energy": "fas fa-leaf",
-    //     "Water and Wastewater": "fas fa-tint",
-    // };
-
+  
 
     const loadLibraryIcons = async (): Promise<{ [key: string]: string }> => {
         const items = await sp.web.lists
@@ -1403,22 +1387,6 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
                         )}
                     </div>
 
-                    {/* {!searchQuery && (
-                            <div className={isArabic ? "erp-sliderButtons" : "sliderButtons"}>
-                                <button className="sliderBtn left" onClick={prevLibrary} disabled={currentIndex === 0}>
-                                    <img src={leftblack} alt="Previous" className="iconblack" />
-                                </button>
-                                <button
-                                    className="sliderBtn right"
-                                    onClick={nextLibrary}
-                                    disabled={currentIndex + itemsPerPage >= libraries.length}
-                                >
-                                    <img src={rightblack} alt="Next" className="iconblack" />
-                                </button>
-                            </div>
-                        )} */}
-
-
                     {!searchQuery && libraries.length > itemsPerPage && (
                         <div className={isArabic ? "erp-sliderButtons" : "sliderButtons"}>
                             <button
@@ -1443,285 +1411,6 @@ export const ASPRDMSHomeArabic: React.FC<IDmswebasprProps> = (props) => {
 
                 </div>
             </div>
-
-            {/* <div className="Buttondrop" style={{display:"none !important"}}>
-                    <div className="libhead">
-                        <div className="dropdown" ref={dropdownRef}>
-                            <button className="dropbtn" onClick={toggleDropdown}>
-                                {isArabic ? "إنشاء وتحميل" : "Create & Upload"} <img src={DownArrow} className="downArrow" />
-                            </button>
-
-                            <div className={`dropdown-content ${isOpen ? "show" : ""}`}>
-                                <a onClick={() => { setShowModal(true); setIsOpen(false); }} className="cursor"><span className="icon"><img src={Plus} alt="" /></span> {isArabic ? "مجلد جديد" : "New Folder"}</a>
-                                <a onClick={() => { setShowModalFile(true); setIsOpen(false); }} className="cursor"><span className="icon"><img src={Upload} alt="" /></span>{isArabic ? "تحميل ملف" : "Upload File"}</a>
-                                <Link to="/Request" target="_blank"><span className="icon"><img src={Plus} alt="" /></span> {isArabic ? "إنشاء مستودع" : "Create Repository"}</Link>
-                            </div>
-                        </div>
-                    </div>
-                </div> */}
-
-            {/* Content Section */}
-            {/* <div className="contentSection" style={{display:"none !important"}}>
-
-                    <div className="block">
-                        <div className="box-header">
-                            <h2 dir={isArabic ? "rtl" : "ltr"}>
-                                {isArabic
-                                    ? `المجلدات والملفات في ${activeLibrary?.TranslatedTitle || activeLibrary?.Title}`
-                                    : `Folders & Files of ${activeLibrary?.Title}`}
-                            </h2>
-                        </div>
-                        <div className="box">
-
-                            {activeLibrary && (
-                                <div className="arrow-breadcrumbs">
-                                    <div
-                                        className="arrow-crumb"
-                                        onClick={() => {
-                                            setBreadcrumb([]);
-                                            setCurrentFolder(null);
-                                        }}
-                                    >
-                                        {isArabic ? activeLibrary?.TranslatedTitle || activeLibrary?.Title : activeLibrary?.Title}
-                                    </div>
-
-                                    {breadcrumb.map((b, i) => (
-                                        <div
-                                            key={i}
-                                            className="arrow-crumb"
-                                            onClick={() => handleBreadcrumbClick(i)}
-                                        >
-                                            {b.TranslatedName}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            <table className="table">
-                                <thead>
-                                    <tr>
-                                        <th>{isArabic ? "الاسم" : "Name"}</th>
-                                        <th>{isArabic ? "تاريخ التعديل" : "Modified"}</th>
-                                        <th>{isArabic ? "المالك" : "Owner"}</th>
-                                        <th>{isArabic ? "الإجراءات" : "Actions"}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedFiles.length > 0 ? (
-                                        paginatedFiles.map((f, i) => (
-                                            <tr
-                                                key={i}
-                                                onClick={() => handleItemClick(f)}
-                                                style={{ cursor: "pointer" }}
-                                            >
-                                                <td>
-                                                    <Tooltip title={f.FullName || f.Name}>
-                                                        <span style={{ display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
-                                                            {getFileIcon(f.Name, f.IsFolder ? "Folder" : "File")}
-                                                            <span style={{ marginLeft: "6px" }}>{f.TranslatedName}</span>
-                                                        </span>
-                                                    </Tooltip>
-                                                </td>
-                                                <td>
-                                                    {f.TimeLastModified
-                                                        ? new Date(f.TimeLastModified).toLocaleDateString()
-                                                        : "-"}
-                                                </td>
-                                                <td>{f.AuthorTitle}</td>
-                                                <td
-                                                    onClick={(e) => e.stopPropagation()} // ⛔ prevent row click navigation
-                                                >
-                                                    {f.IsFolder ? (
-                                                        <DownloadOutlined
-                                                            style={{ color: "#1890ff", marginRight: 12, cursor: "pointer" }}
-                                                            onClick={() => downloadFolderAsZip(f)}
-                                                        />
-                                                    ) : (
-                                                        <DownloadOutlined
-                                                            style={{ color: "#1890ff", marginRight: 12, cursor: "pointer" }}
-                                                            // style={{ color: "#1890ff", marginRight: 12, cursor: "pointer", display: isAuthorized ? "inline-block" : "none" }}
-                                                            onClick={() => downloadFile(f.ServerRelativeUrl, f.Name)}
-                                                        />
-                                                    )}
-
-                                                    <DeleteOutlined
-                                                        style={{ color: "red", cursor: "pointer" }}
-                                                        onClick={() => deleteItem(f)}
-                                                    />
-                                                </td>
-
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={4} className="noData">
-                                                {isArabic ? "لم يتم العثور على أي ملفات أو مجلدات" : "No files or folders found"}
-
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-    
-
-
-
-                            {files.length > pageSize && (
-
-                                <div className="pagination">
-                                    <button
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                    >
-                                        «
-                                    </button>
-
-                                    {renderPageNumbers().map((p, index) =>
-                                        p === "..." ? (
-                                            <span key={index} className="dots">...</span>
-                                        ) : (
-                                            <button
-                                                key={p}
-                                                className={p === currentPage ? "active" : ""}
-                                                onClick={() => handlePageChange(Number(p))}
-                                            >
-                                                {p}
-                                            </button>
-                                        )
-                                    )}
-
-                                    <button
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        »
-                                    </button>
-                                </div>
-
-                            )}
-
-                        </div>
-                    </div>
-
-                    <div className="block">
-                        <div className="box-headersec">
-                            <h2>{isArabic ? "أحدث الملفات" : "Recent Files"}</h2>
-                        </div>
-                        <div className="box recentFiles">
-                            <ul>
-
-                                {recentFiles.length > 0 ? (
-                                    recentFiles.map((f, i) => (
-                                        <li
-                                            key={i}
-                                            style={{ cursor: "pointer" }}
-                                            onClick={() => window.open(f.ServerRelativeUrl + "?web=1", "_blank")}
-                                        >
-                                            {getFileIcon(f.Name, "File")}{" "}
-                                            <span style={{ marginLeft: "6px" }}>{f.TranslatedName}</span>{" "}
-                                            ({new Date(f.TimeLastModified).toLocaleDateString()})
-                                        </li>
-                                    ))
-                                ) : (
-                                    <li> {isArabic ? "لا توجد ملفات حديثة" : "No recent files"}</li>
-                                )}
-
-                            </ul>
-
-                        </div>
-                    </div>
-                </div> */}
-
-            {/* Modal for Folder */}
-            {/* {showModal && (
-                    <div className="modalOverlay">
-                        <div className="modalContent">
-                            <div className="modelbox">
-                                <h3>{isArabic ? "قم بإنشاء مجلد" : "Create a folder"}</h3>
-                            </div>
-                            <div className="Modelboxdown">
-                                <label htmlFor="FolderName">{isArabic ? "اسم المجلد" : "FolderName"}</label>
-                                <input
-                                    placeholder="Enter new folder name"
-                                    value={newFolderName}
-                                    onChange={(e) => setNewFolderName(e.target.value)}
-                                    className="modelinput"
-                                />
-
-                                <div style={{ marginTop: 10, marginBottom: 10, textAlign: "left" }}>
-                                    <label htmlFor="Edit">{isArabic ? "يحرر" : "Edit"}</label>
-                                    <PeoplePicker
-                                        context={peoplePickerContext}
-                                        // titleText="Edit"
-                                        personSelectionLimit={5}
-                                        groupName={""}
-                                        showtooltip={true}
-                                        required={false}
-                                        disabled={false}
-                                        onChange={(items: any[]) => setSelectedUsers(items)} // ✅ correct usage
-                                        showHiddenInUI={false}
-                                        principalTypes={[PrincipalType.User]}
-                                        resolveDelay={1000}
-                                    />
-                                </div>
-                                <div style={{ marginTop: 10, marginBottom: 10, textAlign: "left" }}>
-                                    <label htmlFor="View">{isArabic ? "منظر" : "View"}</label>
-                                    <PeoplePicker
-                                        context={peoplePickerContext}
-                                        // titleText="View"
-                                        personSelectionLimit={5}
-                                        groupName={""}
-                                        showtooltip={true}
-                                        required={false}
-                                        disabled={false}
-                                        onChange={(items: any[]) => setViewUsers(items)}
-
-                                        showHiddenInUI={false}
-                                        principalTypes={[PrincipalType.User]}
-                                        resolveDelay={1000}
-                                    />
-                                </div>
-
-                                <div style={{ textAlign: "center" }}>
-                                    <button type="button" className="createbtn" onClick={handleCreateFolder}>
-                                        {isArabic ? "يخلق" : "Create"}
-                                    </button>
-                                    <button type="button" className="closebtn" onClick={closeModal}>
-                                        {isArabic ? "يلغي" : "Cancel"}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )} */}
-
-            {/* Modal for Files */}
-            {/* {showModalFile && (
-                    <div className="modalOverlay">
-                        <div className="modalContent">
-                            <div className="modelbox">
-                                <h3>{isArabic ? "إجراء تحميل المستند" : "Document Upload Procedure"}</h3>
-                            </div>
-                            <div className="Modelboxdown">
-                                <label htmlFor="Attachments">{isArabic ? "المرفقات" : "Attachments"} <span style={{ color: "red" }}>*</span></label>
-                                <input type="file" multiple style={{ border: "1px solid #ddd", padding: "3px", borderRadius: "3px", marginBottom: "1rem" }}
-                                    onChange={(e) => {
-                                        const files = Array.from(e.target.files || []);
-                                        setFileList(files);
-                                    }} />
-
-                                <div style={{ textAlign: "center" }}>
-                                    <button type="button" className="createbtn" onClick={() => handleFileUpload(fileList)}>
-                                        {isArabic ? "يخلق" : "Create"}
-                                    </button>
-                                    <button type="button" className="closebtn" onClick={closeModalfile}>
-                                        {isArabic ? "يلغي" : "Cancel"}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )} */}
         </div >
     );
 };
