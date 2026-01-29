@@ -172,6 +172,7 @@
     text-align: center;
   }
 
+
   /* Right side (user profile) */
   .userProfile {
     display: flex;
@@ -206,6 +207,91 @@
     color: #f0f0f0;
   }
 
+
+
+
+  /* Header strip */
+  .erp-Headingstrip {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    /* Left | Center | Right */
+    align-items: center;
+    padding: 8px 10px;
+    background: #006a5d;
+    // background: linear-gradient(135deg, #006a5d, #2a8998);
+    color: #fff;
+    // margin-bottom: 5px;
+  }
+
+
+
+  /* Left side (logo) */
+  .erp-Headingstrip .erp-mainlogo {
+    display: flex;
+    flex-direction: row-reverse;
+  }
+
+  .erp-Headingstrip .erp-logo {
+    height: 30px;
+    margin-right: 5px;
+  }
+
+  .erp-Headingstrip .erp-logoname {
+    height: 30px;
+    width: 205px;
+  }
+
+  /* Center heading */
+  .erp-Headingstrip .erp-heading {
+    justify-self: center;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: #fff;
+    text-align: center;
+  }
+
+  /* Right side (user profile) */
+  .erp-Headingstrip .erp-userProfile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-self: end;
+    flex-direction: row-reverse;
+  }
+
+  .erp-Headingstrip .erp-userProfile img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+  }
+
+  .erp-Headingstrip .erp-userProfile div {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    text-align: right;
+  }
+
+  .erp-Headingstrip .erp-userProfile span {
+    font-weight: 600;
+    font-size: 12px;
+    color: #fff;
+  }
+
+  .erp-Headingstrip .erp-userProfile small {
+    font-size: 12px;
+    color: #f0f0f0;
+  }
+
+
+
+
+
+
   .Headline {
     border-bottom: 1px solid #fff;
   }
@@ -231,7 +317,7 @@
     background-color: #006a5d;
     // background: linear-gradient(135deg, #006a5d, #2a8998);
     // margin-bottom: 5px;
-    padding: 0px 10px;
+    padding: 5px 10px;
     // border-bottom: 1px solid #fff;
   }
 
@@ -1231,6 +1317,7 @@
     display: flex;
     gap: 4px;
     padding: 4px;
+    margin: 5px 0px;
     flex-direction: row-reverse !important;
   }
 
